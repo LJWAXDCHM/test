@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能笔记系统</title>
+    <style>
+        /* 基本样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        /* 上传区域样式 */
+        .upload-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .upload-box h2 {
+            margin-top: 0;
+            color: #4a4a4a;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .drop-area:hover, .drop-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+
+        .drop-area .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .file-list {
+            margin: 15px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .process-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 进度显示样式 */
+        .progress-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-percentage {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 结果展示样式 */
+        .result-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-section.error {
+            background: #ffebee;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #4caf50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            background: #3d8b40;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.mindmap-btn {
+            background: #2196f3;
+        }
+
+        .action-btn.mindmap-btn:hover {
+            background: #0b7dda;
+        }
+
+        .action-btn.secondary {
+            background: #757575;
+        }
+
+        .action-btn.secondary:hover {
+            background: #616161;
+        }
+
+        /* 错误详情展示 */
+        .error-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #c62828;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 历史记录样式 */
+        .history-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .history-item .file-info {
+            flex: 1;
+        }
+
+        .history-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-processing {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* 消息提示 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 400px;
+            word-break: break-all;
+        }
+
+        .message.success {
+            background: #4caf50;
+        }
+
+        .message.error {
+            background: #f44336;
+        }
+
+        .message.warning {
+            background: #ff9800;
+        }
+
+        /* 思维导图容器 */
+        .mindmap-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        /* 阶段列表 */
+        .stage-list {
+            margin-top: 15px;
+        }
+
+        .stage-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stage-item:last-child {
+            border-bottom: none;
+        }
+
+        .stage-icon {
+            font-size: 16px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .stage-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .stage-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .stage-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stage-status.processing {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .stage-status.pending {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .stage-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 智能笔记系统</h1>
+            <p>上传文档和音频，自动生成结构化笔记和交互式思维导图</p>
+        </header>
+
+        <!-- 上传区域 -->
+        <div class="upload-box">
+            <h2>📁 上传文件（文档 + 音频）</h2>
+
+            <div class="drop-area" id="dropZone">
+                <div class="icon">📁</div>
+                拖放文件到这里或点击选择文件
+                <small style="display: block; margin-top: 8px; color: #666;">
+                    文档: PDF/PPT/PPTX | 音频: MP3/WAV/M4A/FLAC/AAC/OGG/OPUS
+                </small>
+            </div>
+
+            <input type="file" id="fileInput" multiple
+                accept=".pdf,.ppt,.pptx,.mp3,.wav,.m4a,.flac,.aac,.ogg,.opus"
+                style="display:none;">
+
+            <div class="file-list" id="fileList"></div>
+
+            <div class="input-group">
+                <label for="sourceName">📝 笔记名称：</label>
+                <input type="text" id="sourceName" placeholder="例如：物理课笔记">
+            </div>
+
+            <button class="process-btn" id="processBtn">
+                <span id="btnText">🚀 开始处理</span>
+                <span id="btnSpinner" style="display:none;margin-left:8px;">⏳</span>
+            </button>
+        </div>
+
+        <!-- 进度显示 -->
+        <div class="progress-section" id="progressSection">
+            <h3>📊 处理进度</h3>
+            <div class="progress-info">
+                <span id="progressText">等待中...</span>
+                <span class="progress-percentage" id="progressPercentage">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="stage-list" id="stageList">
+                <!-- 处理阶段会动态显示 -->
+            </div>
+        </div>
+
+        <!-- 结果展示 -->
+        <div class="result-section" id="resultSection">
+            <h3 id="resultTitle">🎉 处理完成！</h3>
+            <p id="resultDesc">您的内容已处理完成，可以查看和下载结果：</p>
+
+            <div class="result-actions" id="resultActions">
+                <!-- 结果链接会动态生成 -->
+            </div>
+
+            <!-- 错误详情 -->
+            <div class="error-details" id="errorDetails" style="display: none;"></div>
+
+            <!-- 思维导图预览区域 -->
+            <div id="mindmapPreview" style="margin-top: 20px; display: none;">
+                <h4>🧠 思维导图预览</h4>
+                <div class="mindmap-container">
+                    <iframe id="mindmapIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-section">
+            <div class="history-header">
+                <h3>🕒 历史记录</h3>
+                <button class="action-btn secondary" onclick="loadHistory()" style="padding: 8px 12px;">
+                    🔄 刷新记录
+                </button>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <!-- 历史记录会动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息提示 -->
+    <div class="message" id="message"></div>
+
+    <script>
+        // 配置
+        const API_BASE = 'http://localhost:8000/api';
+        let currentTaskId = null;
+        let pollInterval = null;
+        let selectedFiles = [];
+
+        // DOM元素
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const processBtn = document.getElementById('processBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const sourceNameInput = document.getElementById('sourceName');
+        const progressSection = document.getElementById('progressSection');
+        const resultSection = document.getElementById('resultSection');
+        const message = document.getElementById('message');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+            setupDragAndDrop();
+            processBtn.addEventListener('click', processFiles);
+        });
+
+        // 设置拖拽事件
+        function setupDragAndDrop() {
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        // 处理文件
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displaySelectedFiles();
+        }
+
+        // 显示已选文件
+        function displaySelectedFiles() {
+            fileList.innerHTML = '';
+
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">暂无文件</div>';
+                return;
+            }
+
+            selectedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span>📄 ${file.name} (${formatFileSize(file.size)})</span>
+                    <button onclick="removeFile(${index})"
+                        style="background:none;border:none;cursor:pointer;color:#f44336;font-size:18px;">×</button>
+                `;
+                fileList.appendChild(div);
+            });
+
+            // 自动设置笔记名称
+            if (selectedFiles.length > 0 && !sourceNameInput.value) {
+                const firstFile = selectedFiles[0];
+                const name = firstFile.name.replace(/\.[^/.]+$/, "");
+                sourceNameInput.value = name;
+            }
+        }
+
+        // 移除文件
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            displaySelectedFiles();
+        };
+
+        // 处理文件上传
+        async function processFiles() {
+            if (selectedFiles.length === 0) {
+                showMessage('请先选择文件', 'error');
+                return;
+            }
+
+            const sourceName = sourceNameInput.value.trim() || '智能笔记';
+
+            // 准备FormData
+            const formData = new FormData();
+            let hasDocument = false;
+            let documentFile = null;
+            let audioFile = null;
+
+            for (let file of selectedFiles) {
+                const ext = file.name.toLowerCase().split('.').pop();
+                if (['pdf', 'ppt', 'pptx'].includes(ext)) {
+                    if (!hasDocument) {
+                        formData.append('document', file);
+                        documentFile = file;
+                        hasDocument = true;
+                    } else {
+                        showMessage('仅支持一个文档文件，已忽略多余文档', 'warning');
+                    }
+                } else if (['mp3', 'wav', 'm4a', 'flac', 'aac', 'ogg', 'opus'].includes(ext)) {
+                    if (!audioFile) {
+                        formData.append('audio', file);
+                        audioFile = file;
+                    } else {
+                        showMessage('仅支持一个音频文件，已忽略多余音频', 'warning');
+                    }
+                }
+            }
+
+            if (!hasDocument) {
+                showMessage('请至少上传一个文档文件 (PDF/PPT)', 'error');
+                return;
+            }
+
+            formData.append('source_name', sourceName);
+
+            // 禁用按钮，显示加载状态
+            processBtn.disabled = true;
+            btnText.textContent = '处理中...';
+            btnSpinner.style.display = 'inline-block';
+
+            // 显示进度区域，隐藏结果区域
+            progressSection.style.display = 'block';
+            resultSection.style.display = 'none';
+            resultSection.classList.remove('error');
+
+            // 初始化进度
+            updateProgress(0, '准备上传文件...');
+
+            try {
+                const response = await fetch(`${API_BASE}/process`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API调用失败: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('📨 API响应数据:', data);
+
+                if (data.success) {
+                    currentTaskId = data.task_id;
+                    updateProgress(10, '文件上传成功，开始处理...');
+                    showMessage('文件上传成功，开始后台处理', 'success');
+                    startPolling();
+                } else {
+                    throw new Error(data.error || '创建任务失败');
+                }
+
+            } catch (error) {
+                console.error('上传失败:', error);
+                showMessage('上传失败: ' + error.message, 'error');
+                resetUI();
+                progressSection.style.display = 'none';
+            }
+        }
+
+        // 开始轮询任务状态
+        function startPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/tasks/${currentTaskId}`);
+
+                    if (!response.ok) {
+                        throw new Error(`查询失败: ${response.status}`);
+                    }
+
+                    const status = await response.json();
+                    console.log('🔍 轮询结果:', status);
+
+                    if (status.status === 'completed' || status.status === 'failed') {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+
+                        if (status.status === 'completed') {
+                            updateProgress(100, '处理完成！');
+                            showResults(status.result || {});
+                            loadHistory();
+                        } else {
+                            updateProgress(0, '处理失败');
+                            showError(status.error || '未知错误', status.result);
+                        }
+                    } else {
+                        const progress = status.progress || 0;
+                        const currentStage = status.current_stage || '处理中...';
+                        updateProgress(progress, currentStage);
+                    }
+                } catch (error) {
+                    console.error('轮询失败:', error);
+                    // 继续轮询，除非任务完成
+                }
+            }, 2000);
+        }
+
+        // 更新进度
+        function updateProgress(percent, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercentage = document.getElementById('progressPercentage');
+
+            progressFill.style.width = percent + '%';
+            progressText.textContent = message;
+            progressPercentage.textContent = percent + '%';
+
+            // 更新阶段列表
+            updateStageList(percent);
+        }
+
+        // 更新阶段列表
+        function updateStageList(percent) {
+            const stages = [
+                { name: '上传文件', threshold: 0 },
+                { name: '文档转换', threshold: 20 },
+                { name: 'OCR提取', threshold: 40 },
+                { name: '音频转写', threshold: 60 },
+                { name: '内容对齐', threshold: 80 },
+                { name: '笔记生成', threshold: 95 }
+            ];
+
+            const stageList = document.getElementById('stageList');
+            let html = '';
+
+            stages.forEach((stage, index) => {
+                let status, icon;
+                if (percent >= stage.threshold + 15) {
+                    status = 'completed';
+                    icon = '✅';
+                } else if (percent >= stage.threshold) {
+                    status = 'processing';
+                    icon = '⏳';
+                } else {
+                    status = 'pending';
+                    icon = '○';
+                }
+
+                html += `
+                    <div class="stage-item">
+                        <span class="stage-icon">${icon}</span>
+                        <span class="stage-name">${stage.name}</span>
+                        <span class="stage-status ${status}">
+                            ${status === 'completed' ? '完成' : status === 'processing' ? '进行中' : '等待'}
+                        </span>
+                    </div>
+                `;
+            });
+
+            stageList.innerHTML = html;
+        }
+
+
+        // 显示结果
+        // 显示结果
+        function showResults(result) {
+            console.log('📄 显示结果:', result);
+
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'block';
+            resultSection.classList.remove('error');
+
+            document.getElementById('resultTitle').textContent = '🎉 处理完成！';
+            document.getElementById('resultDesc').textContent = '您的内容已处理完成，可以查看和下载结果：';
+            document.getElementById('errorDetails').style.display = 'none';
+
+            const resultActions = document.getElementById('resultActions');
+            resultActions.innerHTML = '';
+
+            if (result && result.notes_output) {
+                const { markdown, mindmap } = result.notes_output;
+                const sourceName = result.source_name || '未知';
+
+                // ✅ 正确的获取文件类型
+                const fileType = result.file_type || 'pdf';
+
+                // 提取文件名
+                const markdownFilename = markdown ? markdown.split('/').pop() : null;
+                const mindmapFilename = mindmap ? mindmap.split('/').pop() : null;
+
+                if (markdownFilename) {
+                    const notesUrl = `${API_BASE}/download/notes/${encodeURIComponent(markdownFilename)}?source_name=${encodeURIComponent(sourceName)}`;
+                    const downloadBtn = createActionButton('📥 下载Markdown笔记', notesUrl, 'notes-btn');
+                    resultActions.appendChild(downloadBtn);
+                }
+
+                if (mindmapFilename) {
+                    // 静态文件URL
+                        const mindmapApiUrl = `${API_BASE}/view/mindmap/${encodeURIComponent(mindmapFilename)}?source_name=${encodeURIComponent(sourceName)}`;
+                        const viewMindmapBtn = createActionButton('🧠 查看思维导图 (API)', mindmapApiUrl, 'mindmap-btn');
+                        resultActions.appendChild(viewMindmapBtn);
+
+                    // 自动显示思维导图预览
+                    setTimeout(() => {
+                        embedMindmap(mindmapApiUrl);
+                    }, 500);
+                }
+            } else {
+                resultActions.innerHTML = '<p>处理完成，但未能获取结果链接</p>';
+            }
+
+            resetUI();
+            showMessage('处理完成！可以查看和下载您的笔记了。', 'success');
+        }
+
+
+        // 显示错误
+        function showError(errorMsg, result) {
+            console.log('❌ 显示错误:', errorMsg, result);
+
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'block';
+            resultSection.classList.add('error');
+
+            document.getElementById('resultTitle').textContent = '❌ 处理失败';
+            document.getElementById('resultDesc').textContent = '处理过程中发生错误，请查看下方错误详情：';
+
+            const resultActions = document.getElementById('resultActions');
+            resultActions.innerHTML = `
+                <button class="action-btn secondary" onclick="resetUI(); document.getElementById('resultSection').style.display='none';">
+                    🔄 重新上传
+                </button>
+            `;
+
+            const errorDetails = document.getElementById('errorDetails');
+            errorDetails.textContent = errorMsg;
+            errorDetails.style.display = 'block';
+
+            resetUI();
+            showMessage('处理失败，请查看错误详情', 'error');
+        }
+
+        // 创建操作按钮
+        function createActionButton(text, href, className) {
+            const a = document.createElement('a');
+            a.href = href;
+            a.className = `action-btn ${className}`;
+            a.textContent = text;
+            a.target = '_blank';
+            return a;
+        }
+
+        // 内嵌思维导图
+        function embedMindmap(mindmapUrl) {
+            const previewDiv = document.getElementById('mindmapPreview');
+            const iframe = document.getElementById('mindmapIframe');
+
+            previewDiv.style.display = 'block';
+            iframe.src = mindmapUrl;
+        }
+
+        // 加载历史记录
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/history?limit=10`);
+                const data = await response.json();
+
+                if (data.success && data.results && data.results.length > 0) {
+                    displayHistory(data.results);
+                } else {
+                    document.getElementById('historyList').innerHTML =
+                        '<div style="text-align:center;color:#999;padding:20px;">暂无历史记录</div>';
+                }
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+            }
+        }
+
+        // 显示历史记录
+        function displayHistory(records) {
+            const historyList = document.getElementById('historyList');
+            let html = '';
+
+            records.forEach(record => {
+                const statusClass = getStatusClass(record.status);
+                const statusText = getStatusText(record.status);
+                const icon = getFileIcon(record.file_type);
+                const time = formatTime(record.upload_time || record.created_at);
+
+                html += `
+                    <div class="history-item">
+                        <div class="file-info">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:20px;">${icon}</span>
+                                <div>
+                                    <strong>${record.filename}</strong>
+                                    <div style="font-size:12px;color:#666;">${time} | ${record.file_type}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <button onclick="viewHistoryItem(${record.id})"
+                                style="padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;">
+                                查看
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            historyList.innerHTML = html;
+        }
+
+        // 查看历史记录项
+        window.viewHistoryItem = async function(id) {
+            try {
+                const response = await fetch(`${API_BASE}/files/${id}`);
+                const data = await response.json();
+
+                if (data.success && data.pipeline_result) {
+                    const result = data.pipeline_result;
+                    if (result.notes && result.notes.markdown_file) {
+                        showResults({
+                            notes_output: {
+                                markdown: result.notes.markdown_file,
+                                mindmap: result.notes.mindmap_file || result.notes.markdown_file.replace('.md', '_mindmap.html')
+                            },
+                            source_name: data.source_info.filename
+                        });
+                    } else {
+                        showMessage('该记录暂无可用结果', 'warning');
+                    }
+                } else {
+                    showMessage('无法获取历史记录详情', 'error');
+                }
+            } catch (error) {
+                showMessage('查看详情失败: ' + error.message, 'error');
+            }
+        };
+
+        // 工具函数
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '未知时间';
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getStatusClass(status) {
+            const map = {
+                'completed': 'status-completed',
+                'processing': 'status-processing',
+                'failed': 'status-failed',
+                'pending': 'status-pending'
+            };
+            return map[status] || 'status-pending';
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'completed': '已完成',
+                'processing': '处理中',
+                'failed': '失败',
+                'pending': '等待中'
+            };
+            return map[status] || status;
+        }
+
+        function getFileIcon(fileType) {
+            const map = {
+                'pdf': '📄',
+                'ppt': '📊',
+                'pptx': '📊',
+                'audio': '🎵',
+                'default': '📁'
+            };
+            return map[fileType] || map.default;
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'info') {
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+
+        // 重置UI
+        function resetUI() {
+            processBtn.disabled = false;
+            btnText.textContent = '🚀 开始处理';
+            btnSpinner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
